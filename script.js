@@ -253,8 +253,7 @@ function loadBrandsList() {
         brands.sort((a, b) => a.name.localeCompare(b.name));
         
         const brandSelects = [
-            document.getElementById('product-brand'),
-            document.getElementById('billing-brand')
+            document.getElementById('product-brand')
         ];
 
         // Clear existing options
@@ -831,8 +830,8 @@ async function sendTelegramMessage(message) {
         return false;
     }
 
-    const botToken = '6330850455:AAEr7XSfLqodb1Pl3srqU_9yYnErANni9No';
-    const chatId = '-1001979192306';
+    const botToken = '7520476821:AAEjzldN9I0ACrdCIkexT2O7D5TstFjgWQw';
+    const chatId = '-1002402346984';
     const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${message}&parse_mode=Markdown`;
 
     try {
