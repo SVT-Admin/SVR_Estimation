@@ -5,6 +5,8 @@ function initStorage() {
         localStorage.setItem('products', JSON.stringify([]));
     if (!localStorage.getItem('bills')) 
         localStorage.setItem('bills', JSON.stringify([]));
+    if (!localStorage.getItem('customers')) 
+        localStorage.setItem('customers', JSON.stringify([]));
 }
 
 // Call initStorage when the page loads
@@ -34,7 +36,7 @@ function loadStaffDropdown() {
 }
 
 function showSection(sectionName) {
-    const sections = ['brands', 'products', 'billing', 'reports', 'download'];
+    const sections = ['brands', 'products', 'customers', 'billing', 'reports', 'download'];
     sections.forEach(section => {
         const sectionElement = document.getElementById(`${section}-section`);
         sectionElement.style.display = section === sectionName ? 'block' : 'none';
@@ -42,8 +44,224 @@ function showSection(sectionName) {
 
     if (sectionName === 'brands') loadBrandsList();
     if (sectionName === 'products') loadProductsList();
+    if (sectionName === 'customers') loadCustomersList();
     if (sectionName === 'billing') loadBrandsList();
     if (sectionName === 'reports') generateReport();
+}
+
+const hamburger = document.getElementById('hamburger-btn');
+const navSidebar = document.getElementById('nav-sidebar');
+const navOverlay = document.getElementById('nav-overlay');
+
+function toggleNav() {
+    hamburger.classList.toggle('active');
+    navSidebar.classList.toggle('active');
+    navOverlay.classList.toggle('active');
+}
+
+function closeNav() {
+    hamburger.classList.remove('active');
+    navSidebar.classList.remove('active');
+    navOverlay.classList.remove('active');
+}
+
+// Event listeners
+hamburger.addEventListener('click', toggleNav);
+navOverlay.addEventListener('click', closeNav);
+
+// Close nav when pressing Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeNav();
+    }
+});
+
+function addCustomer() {
+    const customerName = document.getElementById('customer-name-input').value.trim();
+    const customerPhone = document.getElementById('customer-phone-input').value.trim();
+    const customerAddress = document.getElementById('customer-address-input').value.trim();
+
+    if (!customerName || !customerPhone || !customerAddress) {
+        alert('Please fill all customer details');
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(customerPhone)) {
+        alert('Please enter a valid 10-digit mobile number');
+        return;
+    }
+
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    
+    // Check if customer already exists
+    const existingCustomer = customers.find(c => 
+        c.phone === customerPhone || 
+        c.name.toLowerCase() === customerName.toLowerCase()
+    );
+    
+    if (existingCustomer) {
+        alert('Customer with this name or phone already exists!');
+        return;
+    }
+
+    const newCustomer = {
+        id: Date.now(),
+        name: customerName,
+        phone: customerPhone,
+        address: customerAddress,
+        createdDate: new Date().toISOString()
+    };
+
+    customers.push(newCustomer);
+    localStorage.setItem('customers', JSON.stringify(customers));
+
+    // Clear form
+    document.getElementById('customer-name-input').value = '';
+    document.getElementById('customer-phone-input').value = '';
+    document.getElementById('customer-address-input').value = '';
+
+    loadCustomersList();
+    alert('Customer added successfully!');
+}
+
+function loadCustomersList() {
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    customers.sort((a, b) => a.name.localeCompare(b.name));
+    updateCustomersTable(customers);
+}
+
+function updateCustomersTable(customers) {
+    const tableBody = document.getElementById('customers-table-body');
+    tableBody.innerHTML = '';
+
+    if (customers.length === 0) {
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td colspan="5" style="text-align: center;">No customers found</td>
+        `;
+        return;
+    }
+
+    customers.forEach(customer => {
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td style="text-align: center;">${customer.name}</td>
+            <td style="text-align: center;">${customer.phone}</td>
+            <td style="text-align: center;">${customer.address}</td>
+            <td style="text-align: center;">
+                <button class="btn btn-success btn-sm" onclick="createEstimateForCustomer(${customer.id})">
+                    <i class="icon">📋</i> Estimate
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="editCustomer(${customer.id})">
+                    <i class="icon">✎</i> Edit
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCustomer(${customer.id})">
+                    <i class="icon">×</i> Delete
+                </button>
+            </td>
+        `;
+    });
+}
+
+function searchCustomers() {
+    const searchTerm = document.getElementById('customer-search').value.trim().toLowerCase();
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    
+    if (!searchTerm) {
+        updateCustomersTable(customers);
+        return;
+    }
+
+    const filteredCustomers = customers.filter(customer => 
+        customer.name.toLowerCase().includes(searchTerm) ||
+        customer.phone.includes(searchTerm) ||
+        customer.address.toLowerCase().includes(searchTerm)
+    );
+
+    updateCustomersTable(filteredCustomers);
+}
+
+function editCustomer(customerId) {
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    const customer = customers.find(c => c.id === customerId);
+    
+    if (!customer) return;
+
+    const newName = prompt('Enter customer name:', customer.name);
+    if (newName === null) return;
+
+    const newPhone = prompt('Enter customer phone:', customer.phone);
+    if (newPhone === null) return;
+
+    const newAddress = prompt('Enter customer address:', customer.address);
+    if (newAddress === null) return;
+
+    // Validate inputs
+    const trimmedName = newName.trim();
+    const trimmedPhone = newPhone.trim();
+    const trimmedAddress = newAddress.trim();
+
+    if (!trimmedName || !trimmedPhone || !trimmedAddress) {
+        alert('All fields are required');
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(trimmedPhone)) {
+        alert('Please enter a valid 10-digit mobile number');
+        return;
+    }
+
+    // Check for duplicates (excluding current customer)
+    const existingCustomer = customers.find(c => 
+        c.id !== customerId && 
+        (c.phone === trimmedPhone || c.name.toLowerCase() === trimmedName.toLowerCase())
+    );
+
+    if (existingCustomer) {
+        alert('Customer with this name or phone already exists!');
+        return;
+    }
+
+    // Update customer
+    customer.name = trimmedName;
+    customer.phone = trimmedPhone;
+    customer.address = trimmedAddress;
+
+    const customerIndex = customers.findIndex(c => c.id === customerId);
+    customers[customerIndex] = customer;
+
+    localStorage.setItem('customers', JSON.stringify(customers));
+    loadCustomersList();
+    alert('Customer updated successfully!');
+}
+
+function deleteCustomer(customerId) {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    const updatedCustomers = customers.filter(c => c.id !== customerId);
+    
+    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+    loadCustomersList();
+    alert('Customer deleted successfully!');
+}
+
+function createEstimateForCustomer(customerId) {
+    const customers = JSON.parse(localStorage.getItem('customers')) || [];
+    const customer = customers.find(c => c.id === customerId);
+    
+    if (!customer) return;
+
+    // Switch to billing section
+    showSection('billing');
+
+    // Auto-fill customer details
+    document.getElementById('customer-name').value = customer.name;
+    document.getElementById('customer-mobile').value = customer.phone;
+    document.getElementById('customer-address').value = customer.address;
+
+    // Scroll to billing section
+    document.getElementById('billing-section').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function checkAndSendPendingMessages() {
@@ -782,7 +1000,7 @@ function formatBillDetailsForTelegram(bill) {
     message += `\n*ESTIMATE SUMMARY*\n`;
     message += `Subtotal: ₹${bill.subtotal.toFixed(2)}\n`;
     if (bill.transportCharges) message += `Transport: ₹${bill.transportCharges.toFixed(2)}\n`;
-    if (bill.extraCharges) message += `Extra Charges: ₹${bill.extraCharges.toFixed(2)}\n`;
+    if (bill.extraCharges) message += `Old Bill Balance: ₹${bill.extraCharges.toFixed(2)}\n`;
     message += `*TOTAL AMOUNT: ₹${bill.totalAmount.toFixed(2)}*`;
 
     return encodeURIComponent(message);
@@ -1045,7 +1263,7 @@ function generateProfessionalBillPDF(bill) {
                     <td style="border: 1px solid #000000; text-align: center; padding: 2px 0;">₹${(bill.transportCharges || 0).toFixed(2)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000000; text-align: center; padding: 2px 0;"><strong>Extra Charges</strong></td>
+                    <td style="border: 1px solid #000000; text-align: center; padding: 2px 0;"><strong>Old Bill Balance</strong></td>
                     <td style="border: 1px solid #000000; text-align: center; padding: 2px 0;">₹${(bill.extraCharges || 0).toFixed(2)}</td>
                 </tr>
                 <tr>
@@ -1136,7 +1354,7 @@ function generateReport() {
         <p>Total Active Estimates: ${summaryTotals.billCount}</p>
         <p>Subtotal: ₹${summaryTotals.subtotal.toFixed(2)}</p>
         <p>Transport Charges: ₹${(summaryTotals.transportCharges || 0).toFixed(2)}</p>
-        <p>Extra Charges: ₹${(summaryTotals.extraCharges || 0).toFixed(2)}</p>
+        <p>Old Bill Balance: ₹${(summaryTotals.extraCharges || 0).toFixed(2)}</p>
         <p>Total Sales Amount: ₹${summaryTotals.totalAmount.toFixed(2)}</p>
     `;
 
@@ -1274,7 +1492,7 @@ function getBillDetailsHTML(bill) {
                     <td style="text-align: center;"><b>₹${(bill.transportCharges || 0).toFixed(2)}</b></td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="text-align: right;"><strong>Extra Charges:</strong></td>
+                    <td colspan="4" style="text-align: right;"><strong>Old Bill Balance:</strong></td>
                     <td style="text-align: center;"><b>₹${(bill.extraCharges || 0).toFixed(2)}</b></td>
                 </tr>
                 <tr class="total-amount">
