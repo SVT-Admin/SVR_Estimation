@@ -14,13 +14,24 @@
         <h1>SRI VINAYAGA RINGS</h1>
     </header>
     <div class="container">
-        <nav>
-            <button onclick="showSection('brands')">Brands</button>
-            <button onclick="showSection('products')">Products</button>
-            <button onclick="showSection('billing')">Estimation</button>
-            <button onclick="showSection('reports')">Reports</button>
-            <button onclick="showSection('download')">Download</button>
-            <button onclick="window.location.href='admin.html'">Admin</button>
+        <button class="hamburger" id="hamburger-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <div class="nav-overlay" id="nav-overlay"></div>
+        <nav class="nav-sidebar" id="nav-sidebar">
+            <ul>
+                <li><a href="#" onclick="showSection('brands'); closeNav();">Brands</a></li>
+                <li><a href="#" onclick="showSection('products'); closeNav();">Products</a></li>
+                <li><a href="#" onclick="showSection('customers'); closeNav();">Customers</a></li>
+                <li><a href="#" onclick="showSection('billing'); closeNav();">Estimation</a></li>
+                <li><a href="#" onclick="showSection('reports'); closeNav();">Reports</a></li>
+                <li><a href="#" onclick="showSection('download'); closeNav();">Download</a></li>
+                <li><a href="#" onclick="showSection('pending-bills'); closeNav();">Pending Bills</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
         </nav>
 
         <section id="brands-section" class="section">
@@ -89,6 +100,43 @@
                     </thead>
                     <tbody id="products-table-body">
                         <!-- Products will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!--Customer Section-->
+        <section id="customers-section" class="section" style="display:none;">
+            <h1 style="text-align: center; padding-bottom: 10px;">CUSTOMERS MANAGEMENT</h1>
+            
+            <!-- Add Customer Form -->
+            <div class="form-group">
+                <input type="text" id="customer-name-input" placeholder="Customer Name" required>
+                <input type="tel" id="customer-phone-input" placeholder="Mobile Number (10 digits)" pattern="[0-9]{10}" required>
+                <textarea id="customer-address-input" placeholder="Customer Address" rows="2" required></textarea>
+                <button class="btn btn-primary" onclick="addCustomer()">
+                    <i class="icon">+</i> Add Customer
+                </button>
+            </div>
+
+            <!-- Search Customers -->
+            <div class="form-group">
+                <input type="text" id="customer-search" placeholder="Search by name, phone, or address..." onkeyup="searchCustomers()">
+            </div>
+
+            <!-- Customers Table -->
+            <div class="table-responsive">
+                <table id="customers-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;">Name</th>
+                            <th style="text-align: center;">Phone</th>
+                            <th style="text-align: center;">Address</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-body">
+                        <!-- Customers will be dynamically added here -->
                     </tbody>
                 </table>
             </div>
@@ -167,11 +215,11 @@
                     <input type="number" id="transport-charges" placeholder="Enter Transport Charges" step="50" onchange="updateBillTotals()" required>
                 </div>                  
                 <div class="form-group">
-                    <input type="number" id="extra-charges" placeholder="Enter Extra Charges" step="11" onchange="updateBillTotals()" required>
+                    <input type="number" id="extra-charges" placeholder="Enter Old Bill Balance" step="11" onchange="updateBillTotals()" required>
                 </div>
                 <p>Subtotal: ₹<span id="bill-subtotal">0.00</span></p>
                 <p>Transport Charges: ₹<span id="transport-amount">0.00</span></p>
-                <p>Extra Charges: ₹<span id="extra-amount">0.00</span></p>
+                <p>Old Bill Balance: ₹<span id="extra-amount">0.00</span></p>
                 <p class="total-amount">Grand Total: ₹<span id="bill-total-amount">0.00</span></p>
                 <button class="btn btn-success" onclick="generateBill()">
                     <i class="icon">✓</i> Estimate
